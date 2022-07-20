@@ -1,0 +1,60 @@
+#下載?
+pip install pycurl
+
+#import
+import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
+import numpy as np
+import os
+import requests
+import pycurl
+
+#抓雷達資料的附程式
+def radar():
+
+  url = 'https://opendata.cwb.gov.tw/historyapi/v1/getMetadata/O-A0059-001?Authorization=CWB-800E53EB-AF03-4977-99E7-0C1F2AE8BFB7&format=JSON'
+  data = requests.get(url)
+  data_json = data.json()
+  url_dbz = data_json['dataset']['resources']['resource']['data']['time'][-1]['url']
+  #print(url_dbz)
+
+  with open('url_dbz', 'wb') as f:
+      cl = pycurl.Curl()
+      cl.setopt(cl.URL, url_dbz)
+      cl.setopt(cl.WRITEDATA, f)
+      cl.perform()
+      cl.close()
+
+  def xml_analysis():
+      import xml.etree.ElementTree as ET
+      tree = ET.parse(os.path.join(os.path.join('.', 'url_dbz')))
+      root = tree.getroot()
+      #print(root.tag, root.attrib)
+      #print(len(root[8]), root[8][1][1].text)
+      content = root[8][1][1].text # cwbopendata = root /dataset/contents/content
+      print(type(content), len(content))
+      content_list = content.split(',')
+      assert len(content_list)==921*881
+      
+      xn, yn = 921, 881
+      dbz = np.full((yn, xn), -99.0, dtype=np.float)
+      for y in range(yn):
+          for x in range(xn):
+              dbz[y, x] = float(content_list[x+y*xn])
+      
+      #plt.contourf(dbz)
+      #plt.colorbar()
+      #plt.show()
+
+      x_dbz = (x_lon-115)*80
+      y_dbz = (y_lat-18)*80
+      print(dbz[int(x_dbz),int(y_dbz)])
+
+  xml_analysis()
+  return
+
+
+#測試ㄉ
+x_lon = float(input('lon(115~126): '))
+y_lat = float(input('lat(18~29): '))
+radar()
