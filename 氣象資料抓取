@@ -1,0 +1,27 @@
+def aqi():
+  import numpy as np
+  import requests
+
+  url = 'https://data.epa.gov.tw/api/v2/aqx_p_432?api_key=668a6684-c173-483e-a05c-03b993655ce4'
+  data = requests.get(url)
+  data_json = data.json()
+  location = data_json['records']
+  min_station_diff = 99999
+  for i in location:
+    lat = i['latitude']
+    lon = i['longitude']
+    station_diff = np.sqrt( np.square(float(lon)-my_lon) + np.square(float(lat)-my_lat) )
+    if station_diff < min_station_diff:
+      min_station_diff = station_diff
+      sta_num = i
+
+  aqi = sta_num['aqi']
+
+  #print(sta_num)
+  print('aqi: ',aqi)
+
+  return  
+
+my_lon = float(input('lon: '))
+my_lat = float(input('lat: '))
+aqi()
